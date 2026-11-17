@@ -1,0 +1,118 @@
+﻿@model My_Char.ViewModels.MyBookingsVm
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>My bookings · @Model.ShopName</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body {
+            background: #faf7f2;
+            font-family: system-ui, sans-serif;
+        }
+
+        .hero {
+            background: #2b1810;
+            color: #fff;
+            padding: 24px;
+            border-radius: 0 0 24px 24px;
+        }
+
+            .hero h1 {
+                font-size: 1.3rem;
+                margin: 0;
+            }
+
+        .card-appt {
+            background: #fff;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.05);
+        }
+
+            .card-appt.upcoming {
+                border-left: 4px solid #2b1810;
+            }
+
+            .card-appt.cancelled {
+                opacity: .55;
+            }
+
+        .cta-link {
+            background: #2b1810;
+            color: #fff;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            margin-top: 16px;
+        }
+
+        .btn-cancel {
+            background: none;
+            border: 1px solid #d9534f;
+            color: #d9534f;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: .9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1> Hi @User.Identity!.Name</h1>
+        <p class="mb-0 opacity-75 small">@Model.ShopName</p>
+    </div>
+    <div class="container py-3" style="max-width:640px">
+@if (TempData["Ok"] != null)
+{
+            <div class="alert alert-success">@TempData["Ok"]</div>
+}
+@if (TempData["Error"] != null)
+{
+            <div class="alert alert-danger">@TempData["Error"]</div>
+}
+        <h5 class="mt-2">Upcoming</h5>
+@if (!Model.Upcoming.Any())
+{
+            <p class="text-muted small">No upcoming bookings.</p>
+}
+@foreach (var b in Model.Upcoming)
+{
+            <div class="card-appt upcoming">
+                <div class="fw-bold fs-5">@b.StartLocal.ToString("ddd dd MMM · HH:mm")</div>
+                <div class="text-muted">@b.ServiceName · R@b.Price.ToString("0")</div>
+                @if (b.CanCancel)
+                {
+                    <form asp-action="Cancel" method="post" class="mt-2"
+                          onsubmit="return confirm('Cancel this booking?')">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@b.Id" />
+                        <button class="btn-cancel">Cancel</button>
+                    </form>
+                }
+            </div>
+}
+        <a asp-action="Book" class="cta-link">+ Book a new appointment</a>
+        <h5 class="mt-4">Past</h5>
+        @foreach (var b in Model.Past)
+        {
+            <div class="card-appt @(b.Status == AppointmentStatus.Cancelled ? "cancelled" : "")">
+                <div class="fw-bold">@b.StartLocal.ToString("dd MMM yyyy · HH:mm")</div>
+                <div class="text-muted">@b.ServiceName · R@b.Price.ToString("0") · @b.Status</div>
+            </div>
+        }
+        <form asp-action="Logout" method="post" class="text-center mt-4 mb-5">
+            @Html.AntiForgeryToken()
+            <button class="btn btn-outline-secondary btn-sm">Log out</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -13,10 +13,8 @@ namespace My_Char.Controllers
             _logger = logger;
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
+        public IActionResult Index() => RedirectToAction("Index", "Dashboard");
+       
 
         public IActionResult Privacy()
         {
@@ -28,5 +26,6 @@ namespace My_Char.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+       
     }
 }

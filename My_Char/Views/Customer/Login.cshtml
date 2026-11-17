@@ -1,0 +1,67 @@
+﻿@model My_Char.ViewModels.CustomerLoginVm
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Login · My Chair</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body {
+            background: #faf7f2;
+            font-family: system-ui, sans-serif;
+        }
+
+        .card-login {
+            max-width: 440px;
+            margin: 60px auto;
+            background: #fff;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 8px 30px rgba(0,0,0,.08);
+        }
+
+        h1 {
+            color: #2b1810;
+            font-size: 1.4rem;
+            margin-bottom: 6px;
+        }
+
+        .btn-dark {
+            background: #2b1810;
+            border-color: #2b1810;
+            padding: 12px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="card-login">
+        <h1>Welcome back </h1>
+        <p class="text-muted small mb-4">Log in with the name and phone number you used to book.</p>
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger small">@Html.ValidationSummary(true)</div>
+        }
+        <form asp-action="Login" method="post">
+            @Html.AntiForgeryToken()
+            <div class="mb-3">
+                <label class="form-label fw-bold">Your name</label>
+                <input asp-for="Name" class="form-control form-control-lg" placeholder="e.g. Zama" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">WhatsApp number</label>
+                <input asp-for="Phone" class="form-control form-control-lg"
+                       placeholder="e.g. 0821234567" inputmode="tel" />
+            </div>
+            <button class="btn btn-dark w-100">Log in</button>
+        </form>
+        <p class="text-center text-muted small mt-3 mb-0">
+            New here? Enter your name and phone and you're in - no password needed.
+        </p>
+    </div>
+</body>
+</html>

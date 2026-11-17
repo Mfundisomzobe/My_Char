@@ -1,0 +1,231 @@
+﻿@model My_Char.ViewModels.PublicBookingViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Book at @Model.ShopName</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body {
+            background: #faf7f2;
+            font-family: system-ui, sans-serif;
+        }
+
+        .hero {
+            background: #2b1810;
+            color: #fff;
+            padding: 28px 24px;
+            border-radius: 0 0 24px 24px;
+        }
+
+            .hero h1 {
+                font-size: 1.5rem;
+                margin: 0;
+            }
+
+            .hero .sub {
+                opacity: .75;
+                font-size: .9rem;
+            }
+
+        .section-title {
+            font-weight: 700;
+            font-size: .95rem;
+            margin: 24px 0 12px;
+            color: #2b1810;
+        }
+
+        .service-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: .15s;
+        }
+
+            .service-card.selected {
+                border-color: #2b1810;
+                background: #f5ede6;
+            }
+
+        .slot {
+            display: inline-block;
+            padding: 10px 14px;
+            margin: 4px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            min-width: 70px;
+            text-align: center;
+            font-size: .95rem;
+        }
+
+            .slot.free {
+                background: #d4edda;
+                color: #155724;
+            }
+
+            .slot.selected {
+                background: #2b1810;
+                color: #fff;
+            }
+
+        .cta {
+            position: sticky;
+            bottom: 0;
+            padding: 12px;
+            background: #fff;
+            box-shadow: 0 -4px 12px rgba(0,0,0,.08);
+        }
+
+        .btn-book {
+            background: #2b1810;
+            color: #fff;
+            width: 100%;
+            padding: 14px;
+            font-size: 1.1rem;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+        }
+
+            .btn-book:disabled {
+                opacity: .4;
+            }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1> @Model.ShopName</h1>
+        <div class="sub">@Model.OwnerName · WhatsApp @Model.Phone</div>
+    </div>
+    <div class="container py-3" style="max-width:640px">
+        <div class="section-title">1 · Choose a service</div>
+        @foreach (var s in Model.Services)
+        {
+            <div class="service-card service-option" data-id="@s.Id" data-dur="@s.DurationMinutes">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-bold">@s.Name</div>
+                        <small class="text-muted">@s.DurationMinutes min</small>
+                    </div>
+                    <div class="fw-bold fs-5">R@(s.Price.ToString("0"))</div>
+                </div>
+            </div>
+        }
+        <div class="section-title">2 · Pick a day</div>
+        <input type="date" id="dayPicker" class="form-control form-control-lg mb-3"
+               min="@DateTime.Today.ToString("yyyy-MM-dd")"
+               value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+        <div class="section-title">3 · Pick a time</div>
+        <div id="slotArea"><p class="text-muted small">Choose a service first.</p></div>
+        <div id="details" class="mt-4 d-none">
+            <div class="section-title">4 · Your details</div>
+            <input id="nameInput" class="form-control form-control-lg mb-2" placeholder="Your name" />
+            <input id="phoneInput" class="form-control form-control-lg mb-2"
+                   placeholder="WhatsApp number e.g. 0821234567" inputmode="tel" />
+            <p class="small text-muted mb-4">We send a WhatsApp reminder the day before.</p>
+        </div>
+        <div style="height:90px"></div>
+    </div>
+    <div class="cta">
+        <div class="container" style="max-width:640px">
+            <button id="bookBtn" class="btn-book" disabled>Book</button>
+        </div>
+    </div>
+    <script>
+        const shopSlug = '@Model.Slug';
+        let selectedService = null, selectedStart = null;
+        document.querySelectorAll('.service-option').forEach(el => {
+         el.addEventListener('click', () => {
+         document.querySelectorAll('.service-option').forEach(x => x.classList.remove('selected'));
+         el.classList.add('selected');
+         selectedService = +el.dataset.id;
+         loadSlots();
+         });
+        });
+        document.getElementById('dayPicker').addEventListener('change', loadSlots);
+        Complete "My Chair" MVC Application Page 21
+        async function loadSlots() {
+         const area = document.getElementById('slotArea');
+         if (!selectedService) { area.innerHTML = '<p class="text-muted small">Choose a service first.</p>'; return; }
+         area.innerHTML = '<p class="text-muted small">Loading...</p>';
+         const day = document.getElementById('dayPicker').value;
+         try {
+         const res = await fetch(`/api/public/slots?slug=${shopSlug}&serviceId=${selectedService}&day=${day}`);
+         const data = await res.json();
+         if (!data.slots || !data.slots.length) {
+         area.innerHTML = '<p class="text-muted small">No free slots that day. Try another day </p>';
+         return;
+         }
+         area.innerHTML = data.slots.map(s =>
+         `<span class="slot free" data-start="${s.startUtc}">${s.label}</span>`).join('');
+         document.querySelectorAll('.slot.free').forEach(el => {
+         el.addEventListener('click', () => {
+         document.querySelectorAll('.slot').forEach(x => x.classList.remove('selected'));
+         el.classList.add('selected');
+         selectedStart = el.dataset.start;
+         document.getElementById('details').classList.remove('d-none');
+         checkReady();
+         });
+         });
+         } catch {
+         area.innerHTML = '<p class="text-danger small">Could not load slots. Try again.</p>';
+         }
+        }
+        ['nameInput','phoneInput'].forEach(id =>
+         document.getElementById(id).addEventListener('input', checkReady));
+        function checkReady() {
+         const name = document.getElementById('nameInput').value.trim();
+         const phone = document.getElementById('phoneInput').value.trim();
+         document.getElementById('bookBtn').disabled = !(
+         selectedService && selectedStart && name.length > 1 && /^0\d{9}$/.test(phone));
+        }
+        document.getElementById('bookBtn').addEventListener('click', async () => {
+         const btn = document.getElementById('bookBtn');
+         btn.disabled = true; btn.textContent = 'Booking...';
+         try {
+         const res = await fetch('/api/public/book', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
+         slug: shopSlug, serviceId: selectedService, startUtc: selectedStart,
+         name: document.getElementById('nameInput').value.trim(),
+         phone: document.getElementById('phoneInput').value.trim()
+         })
+         });
+         const data = await res.json();
+         if (res.ok) {
+         document.body.innerHTML = `
+         <div style="padding:48px 24px;text-align:center;max-width:480px;margin:0 auto">
+         <div style="font-size:72px">[ok]</div>
+         <h2 style="color:#2b1810">You're booked!</h2>
+         <p style="color:#555">${data.message}</p>
+         <a href="https://wa.me/${data.shopPhone}?text=${encodeURIComponent(data.confirmMsg)}"
+         style="display:inline-block;background:#25d366;color:#fff;padding:14px 28px;
+         border-radius:12px;text-decoration:none;font-weight:600;margin-top:16px">
+         Confirm on WhatsApp
+         </a>
+         <div style="margin-top:28px">
+         <a href="/login" style="color:#2b1810">Log in with your name + phone to track this booking -></a>
+         </div>
+         </div>`;
+         } else {
+         alert(data.error || 'Something went wrong.');
+         btn.disabled = false; btn.textContent = 'Book';
+         loadSlots();
+         }
+         } catch {
+         alert('Network problem. Try again.');
+         btn.disabled = false; btn.textContent = 'Book';
+         }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+﻿@model My_Char.ViewModels.StatsViewModel
+@{
+    ViewData["Title"] = "Stats";
+}
+<h3 class="mb-3">@Model.MonthLabel</h3>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="small text-muted">Total earned</div>
+                <div class="fs-4 fw-bold">R @Model.TotalEarned.ToString("0")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="small text-muted">Bookings done</div>
+                <div class="fs-4 fw-bold">@Model.TotalBookings</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="small text-muted">No-shows</div>
+                <div class="fs-4 fw-bold">@Model.NoShows</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="small text-muted">Lost</div>
+                <div class="fs-4 fw-bold text-danger">R @Model.LostToNoShows.ToString("0")</div>
+            </div>
+        </div>
+    </div>
+</div>
+<h5>Best services</h5>
+<table class="table">
+    <thead class="table-light"><tr><th>Service</th><th>Bookings</th><th>Revenue</th></tr></thead>
+    <tbody>
+        @foreach (var s in Model.TopServices)
+        {
+            <tr><td class="fw-bold">@s.Name</td><td>@s.Count</td><td>R @s.Revenue.ToString("0")</td></tr>
+        }
+    </tbody>
+</table>
+<h5 class="mt-4">By day</h5>
+<table class="table">
+    <thead class="table-light"><tr><th>Day</th><th>Total</th><th>No-shows</th><th>Rate</th></tr></thead>
+    <tbody>
+        @foreach (var d in Model.ByDayOfWeek)
+        {
+            <tr><td>@d.Day</td><td>@d.Total</td><td>@d.NoShows</td><td>@d.NoShowRate%</td></tr>
+        }
+    </tbody>
+</table>
+<a asp-action="Index" class="btn btn-outline-dark mt-3"><- Back to Today</a>

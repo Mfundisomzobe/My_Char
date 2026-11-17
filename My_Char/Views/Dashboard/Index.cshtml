@@ -1,0 +1,110 @@
+﻿@using My_Char.Models.Entities
+@model My_Char.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Today";
+}
+<div class="rounded-4 text-white p-4 mb-3" style="background:#2b1810">
+    <div class="text-uppercase small opacity-75">Today</div>
+    <div class="fs-1 fw-bold">R @Model.MoneyMadeToday.ToString("0")</div>
+    <div class="small opacity-75">
+        Cash R@Model.CashToday.ToString("0") · EFT R@Model.EftToday.ToString("0")
+        @if (Model.NoShowsToday > 0)
+        {
+            <span> · lost R@Model.LostToNoShows.ToString("0") to @Model.NoShowsToday no-show(s)</span>
+        }
+    </div>
+</div>
+@if (!Model.Appointments.Any())
+{
+    <div class="text-center py-5">
+        <div class="fs-1">[chair]</div>
+        <p class="text-muted mt-2">No bookings today.</p>
+        <p class="small">Share your booking link:</p>
+        <div class="d-flex gap-2 justify-content-center">
+            <code class="bg-light p-2 rounded" style="word-break:break-all">@Model.BookingLink</code>
+            <button onclick="navigator.clipboard.writeText('@Model.BookingLink')"
+                    class="btn btn-dark btn-sm">
+                Copy
+            </button>
+        </div>
+        <a href="https://wa.me/?text=@Uri.EscapeDataString("Book at my salon: " + Model.BookingLink)"
+           target="_blank" class="btn btn-success mt-3"> Share on WhatsApp</a>
+    </div>
+}
+@foreach (var a in Model.Appointments)
+{
+    var border = a.Status == AppointmentStatus.NoShow ? "border-danger"
+    : a.Status == AppointmentStatus.Completed ? "border-success"
+    : "border-secondary";
+    <div class="card mb-3 border-2 @border">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="fw-bold fs-5">@a.StartLocal.ToString("HH:mm") · @a.ClientName</div>
+                    <div class="text-muted">@a.ServiceName · @a.DurationMin min</div>
+                    <div class="fw-bold mt-1">
+                        R @a.Price.ToString("0")
+                        @if (a.PaymentMethod != null)
+                        {
+                            <span class="badge bg-light text-dark">@a.PaymentMethod</span>
+                        }
+                    </div>
+                </div>
+                <span class="badge @StatusBadge(a.Status)">@a.Status</span>
+            </div>
+            @if (a.Status == AppointmentStatus.Booked || a.Status == AppointmentStatus.Confirmed)
+            {
+                <div class="d-flex gap-2 mt-3">
+                    <form asp-action="Start" method="post" class="flex-fill">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@a.Id" />
+                        <button class="btn btn-warning w-100">> Start</button>
+                    </form>
+                    <form asp-action="NoShow" method="post" class="flex-fill"
+                          onsubmit="return confirm('Mark as no-show?')">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@a.Id" />
+                        <button class="btn btn-outline-danger w-100">No-show</button>
+                    </form>
+                </div>
+                <div class="d-flex gap-2 mt-2">
+                    <a href="@Url.Action("Remind", "Dashboard", new { id = a.Id })"
+                       target="_blank" class="btn btn-outline-success btn-sm flex-fill"> WhatsApp reminder</a>
+                    <form asp-action="Cancel" method="post" class="flex-fill"
+                          onsubmit="return confirm('Cancel?')">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@a.Id" />
+                        <button class="btn btn-outline-secondary btn-sm w-100">Cancel</button>
+                    </form>
+                </div>
+            }
+            else if (a.Status == AppointmentStatus.InProgress)
+            {
+                <form asp-action="Done" method="post" class="mt-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@a.Id" />
+                    <div class="d-flex gap-2">
+                        <button name="method" value="Cash" class="btn btn-success flex-fill">v Done · Cash</button>
+                        <button name="method" value="EFT" class="btn btn-success flex-fill">v Done · EFT</button>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+}
+Complete "My Chair" MVC Application Page 27
+<div class="text-center mt-4 mb-5">
+    <a asp-action="Stats" class="text-muted small">See monthly stats -></a>
+</div>
+@functions {
+    string StatusBadge(AppointmentStatus s) => s switch
+    {
+        AppointmentStatus.Booked => "bg-secondary",
+        AppointmentStatus.Confirmed => "bg-info text-dark",
+        AppointmentStatus.InProgress => "bg-warning text-dark",
+        AppointmentStatus.Completed => "bg-success",
+        AppointmentStatus.Cancelled => "bg-dark",
+        AppointmentStatus.NoShow => "bg-danger",
+        _ => "bg-secondary"
+    };
+}

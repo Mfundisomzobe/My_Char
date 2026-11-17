@@ -1,0 +1,26 @@
+﻿@model My_Char.Models.Entities.Service
+@{ ViewData["Title"] = "Add Service"; }
+<h3>Add Service</h3>
+<form asp-action="Create" method="post" class="col-lg-6">
+ @Html.AntiForgeryToken()
+ <div class="mb-3">
+ <label class="form-label">Name</label>
+ <input asp-for="Name" class="form-control" required />
+ </div>
+ <div class="row g-2">
+ <div class="col-6 mb-3">
+ <label class="form-label">Duration (min)</label>
+ <input asp-for="DurationMinutes" type="number" min="5" step="5" class="form-control" required />
+ </div>
+ <div class="col-6 mb-3">
+ <label class="form-label">Price (R)</label>
+ <input asp-for="Price" type="number" min="0" step="1" class="form-control" required />
+ </div>
+ </div>
+ <div class="form-check mb-3">
+ <input asp-for="IsActive" class="form-check-input" checked />
+ <label class="form-check-label">Active</label>
+ </div>
+ <button class="btn btn-dark">Save</button>
+ <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+</form>
